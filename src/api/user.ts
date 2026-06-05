@@ -62,3 +62,20 @@ export const getCurrentUser = async () => {
 export const userLogout = async () => {
   return myAxios.post("/user/logout");
 };
+
+/**
+ * 搜索用户（管理员），username 为空则查询全部
+ */
+export const searchUsers = async (username: string) => {
+  return myAxios.get("/user/search", {
+    params: { username },
+  });
+};
+
+/**
+ * 删除用户（管理员）
+ * 注意：后端用 @RequestBody long id 接收，需直接传数字作为请求体
+ */
+export const deleteUser = async (id: number) => {
+  return myAxios.post("/user/delete", id);
+};
