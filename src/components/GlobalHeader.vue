@@ -15,9 +15,33 @@
           @click="doMenuClick"
         />
       </a-col>
-      <a-col flex="80px">
+      <a-col flex="200px">
         <div class="user-login-status">
-          <a-button type="primary" href="/user/login">登录</a-button>
+          <!-- 未登录状态：显示登录按钮 -->
+          <a-button v-if="!isLogin" type="primary" href="/user/login">
+            登录
+          </a-button>
+          <!-- 已登录状态：显示用户信息和退出按钮 -->
+          <div v-else class="user-info">
+            <a-space>
+              <span class="user-account">{{
+                loginUserStore.loginUser.userAccount
+              }}</span>
+              <a-tag
+                :color="
+                  loginUserStore.loginUser.userRole === 1 ? 'red' : 'blue'
+                "
+              >
+                {{ userRoleText }}
+              </a-tag>
+              <a-button type="link" danger @click="handleLogout">
+                <template #icon>
+                  <logout-outlined />
+                </template>
+                退出
+              </a-button>
+            </a-space>
+          </div>
         </div>
       </a-col>
     </a-row>
@@ -25,14 +49,53 @@
 </template>
 
 <script lang="ts" setup>
-import { h, ref } from "vue";
-import { CrownOutlined, HomeOutlined } from "@ant-design/icons-vue";
-import { MenuProps } from "ant-design-vue";
+import { computed, h, ref } from "vue";
+import {
+  CrownOutlined,
+  HomeOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons-vue";
+import { MenuProps, message } from "ant-design-vue";
 import { useRouter } from "vue-router";
+import { useLoginUserStore } from "@/store/useLoginUserStore";
+import { userLogout } from "@/api/user";
 
 const router = useRouter();
+const loginUserStore = useLoginUserStore();
 
 const current = ref<string[]>([]);
+
+// 判断是否已登录（id > 0 表示已登录）
+const isLogin = computed(() => {
+  return loginUserStore.loginUser.id > 0;
+});
+
+// 获取用户权限文本
+const userRoleText = computed(() => {
+  const role = loginUserStore.loginUser.userRole;
+  return role === 1 ? "管理员" : "普通用户";
+});
+
+// 退出登录
+const handleLogout = async () => {
+  try {
+    const res = await userLogout();
+    if (res.data.code === 0) {
+      message.success("退出成功");
+      // 清空登录状态
+      loginUserStore.setLoginUser({
+        id: 0,
+        username: "未登录",
+      });
+      // 跳转到登录页
+      router.push("/user/login");
+    } else {
+      message.error("退出失败：" + res.data.message);
+    }
+  } catch (error) {
+    message.error("退出失败，请重试");
+  }
+};
 
 // 监听路由变化，更新当前选中菜单
 router.afterEach((to) => {
@@ -98,5 +161,15 @@ const items = ref<MenuProps["items"]>([
   align-items: center;
   justify-content: center;
   height: 100%;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-account {
+  font-weight: 500;
+  color: #333;
 }
 </style>
