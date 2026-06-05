@@ -77,5 +77,9 @@ export const searchUsers = async (username: string) => {
  * 注意：后端用 @RequestBody long id 接收，需直接传数字作为请求体
  */
 export const deleteUser = async (id: number) => {
-  return myAxios.post("/user/delete", id);
+  return myAxios.post("/user/delete", id, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 };
